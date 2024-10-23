@@ -105,7 +105,7 @@ const UploadPage = () => {
                     </Box>
                 )}
             </form>
-            <Button variant="contained" onClick={handleSubmit}>Upload Case Data</Button>
+            <Button variant="contained" onClick={handleSubmit}>Upload Case</Button>
         </Box>
     );
 };
