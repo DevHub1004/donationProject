@@ -4,6 +4,9 @@ import './index.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import HomePage from './Pages/HomePage';
 import UploadPage from './Pages/UploadPage';
+import HomeScreen from './Pages/HomeScreen/HomeScreen';
+
+
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -11,6 +14,7 @@ root.render(
     <Router>
         <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/home" element={<HomeScreen />} />
             <Route path="/Upload" element={<UploadPage />} />
         </Routes>
     </Router>

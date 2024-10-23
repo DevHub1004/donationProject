@@ -1,0 +1,48 @@
+*{
+    padding:0;
+    margin:0;
+    box-sizing:border-box;
+}
+
+:root{
+    --borderColor:rgb(28, 39, 41);
+}
+
+.HomePage{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background-color: pink;
+}
+
+.articleBox{
+    width:88vw;
+    height: auto;
+    background-color: rgb(224, 245, 240);
+    border: var(--borderColor) 4px solid;
+    margin: 20px auto;
+    border-radius: 20px;
+    padding:5px;
+    display:flex;
+    justify-content: space-evenly;
+    align-items: center;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+}
+
+.articleBox video{
+    border: black 2px solid;
+    background-color: black;
+}
+
+.articleBox .rightBox{
+    background-color: pink;
+    height: 10vh;
+    width: 40vw;
+}
+
+.articleBox .rightBox pre{
+    width: 40vw;
+    text-wrap: wrap;
+    background-color:gray;
+}

@@ -3,8 +3,9 @@ import './App.css';
 
 function App() {
     return (
-        <Routes>
+      <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<HomeScreen />} />
         <Route path="/Upload" element={<UploadPage />} />
       </Routes>
     );
