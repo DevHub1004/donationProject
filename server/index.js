@@ -1,49 +1,159 @@
-
-const express = require('express');
-const multer = require('multer');
-const cors = require('cors');
-const path = require('path');
-const fs = require('fs');
-const PORT = process.env.PORT || 8000;
+const express = require("express");
+const mongoose = require("mongoose");
+const multer = require("multer");
+const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
-// Middleware to parse JSON bodies
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir);
-}
+// MongoDB connection
+const mongoURI = process.env.MONGODB_URI;
+mongoose.connect(mongoURI, console.log(`Database connected to ${mongoURI}`));
 
-// Set up multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadsDir); // Save files in the uploads directory
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`); // Rename the file
-    },
-});
-const upload = multer({ storage });
-
-// POST route for handling multiple file uploads
-app.post('/api/upload', upload.fields([
-    // { name: 'images', maxCount: 10 },
-    { name: 'video', maxCount: 5 },
-    // { name: 'audios', maxCount: 5 },
-]), (req, res) => {
-    const { title, description, content } = req.body;
-    const { video } = req.files;
-
-    const response = {
-        "message": 'Files uploaded successfully!'
-    };
-    console.log(title, description, content, video);
-    res.status(200).json(response);
+// Create Video Schema
+const videoSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  details: String,
+  filename: String,
+  contentType: String,
+  uploadDate: {
+    type: Date,
+    default: Date.now,
+  },
+  content: Buffer, // Store video directly as Buffer
 });
 
-// Start the server
+const Video = mongoose.model("Video", videoSchema);
+
+// Configure multer for memory storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB limit
+  },
+}).single("video");
+
+// Upload endpoint
+app.post("/api/upload", (req, res) => {
+  console.log(req.body, req.body.title, req.file);
+  upload(req, res, async function (err) {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({
+        success: false,
+        message: `Upload error: ${err.message}`,
+      });
+    } else if (err) {
+      return res.status(500).json({
+        success: false,
+        message: `Server error: ${err.message}`,
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Please upload a video file",
+      });
+    }
+
+    try {
+      const newVideo = new Video({
+        title: req.body.title,
+        description: req.body.description,
+        details: req.body.details,
+        filename: req.file.originalname,
+        contentType: req.file.mimetype,
+        content: req.file.buffer,
+      });
+
+      const savedVideo = await newVideo.save();
+
+      res.json({
+        success: true,
+        video: {
+          id: savedVideo._id,
+          title: savedVideo.title,
+          description: savedVideo.description,
+          details: savedVideo.details,
+          filename: savedVideo.filename,
+          uploadDate: savedVideo.uploadDate,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: `Database error: ${error.message}`,
+      });
+    }
+  });
+});
+
+// Get video list endpoint
+app.get("/api/videos", async (req, res) => {
+  try {
+    const videos = await Video.find({}, {});
+    res.json({
+      success: true,
+      videos: videos,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `Database error: ${error.message}`,
+    });
+  }
+});
+
+// Get single video endpoint
+app.get("/api/videos/:id", async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id);
+    if (!video) {
+      return res.status(404).json({
+        success: false,
+        message: "Video not found",
+      });
+    }
+
+    // Set the proper content type for the response
+    res.set("Content-Type", video.contentType);
+    res.send(video.content);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `Database error: ${error.message}`,
+    });
+  }
+});
+
+// Delete video endpoint
+app.delete("/api/videos/:id", async (req, res) => {
+  try {
+    const video = await Video.findByIdAndDelete(req.params.id);
+    if (!video) {
+      return res.status(404).json({
+        success: false,
+        message: "Video not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Video deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: `Database error: ${error.message}`,
+    });
+  }
+});
+
+// Start server
+const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

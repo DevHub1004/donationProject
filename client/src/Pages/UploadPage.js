@@ -34,11 +34,12 @@ const UploadPage = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (title != null && description != null && content != null && videoPreview != null && video != null) {
+            console.log(title, description, content)
             console.log('Video selected:', video);
             const formData = new FormData();
             formData.append('title', title);
             formData.append('description', description);
-            formData.append('content', content);
+            formData.append('details', content);
             formData.append('video', video);
 
             // const headers = {
@@ -48,7 +49,7 @@ const UploadPage = () => {
 
             try {
                 const response = await axios.post('http://localhost:8000/api/upload', formData);
-                console.log(`Response: ${response.data.message}`);
+                console.log(`Response: ${JSON.stringify(response.data)}`);
             } catch (error) {
                 console.log(`Error: ${error.response ? error.response.data.message : error.message}`);
             }
